@@ -1,45 +1,70 @@
-// src/pages/Dashboard.jsx
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { FiThermometer, FiActivity, FiBarChart } from "react-icons/fi";
+import { MdError, MdWarning, MdCheckCircle } from "react-icons/md";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
+// Fonction pour déterminer le niveau de criticité
 function getStatus(temperature, vibration, pressure) {
   if (temperature > 100 || vibration > 0.8 || pressure > 1.8) return "rouge";
   if (temperature > 85 || vibration > 0.5 || pressure > 1.4) return "orange";
   return "vert";
 }
 
-function MachineStatusCard({ machine }) {
-  const statusColors = {
+// Carte affichant les données d’une machine
+function MachineCard({ machine }) {
+  const colors = {
     vert: "bg-green-500",
     orange: "bg-yellow-500",
     rouge: "bg-red-500",
   };
 
+  const statusIcons = {
+    vert: <MdCheckCircle className="inline-block mr-1" />,
+    orange: <MdWarning className="inline-block mr-1" />,
+    rouge: <MdError className="inline-block mr-1" />,
+  };
+
   return (
-    <div className="p-4 border rounded shadow mb-4 bg-white">
+    <div className="p-4 bg-white rounded shadow-md border">
       <h3 className="font-bold text-lg mb-2">{machine.name}</h3>
-      <p>Température : {machine.temperature}°C</p>
-      <p>Vibration : {machine.vibration}</p>
-      <p>Pression : {machine.pressure} bar</p>
+      <p>
+        <FiThermometer className="inline mr-1" />
+        Température : {machine.temperature} °C
+      </p>
+      <p>
+        <FiActivity className="inline mr-1" />
+        Vibration : {machine.vibration}
+      </p>
+      <p>
+        <FiBarChart className="inline mr-1" />
+        Pression : {machine.pressure} bar
+      </p>
       <span
-        className={`inline-block px-3 py-1 text-white rounded mt-2 ${
-          statusColors[machine.status] || "bg-gray-400"
+        className={`inline-flex items-center mt-3 px-3 py-1 rounded text-white font-semibold ${
+          colors[machine.status]
         }`}
       >
+        {statusIcons[machine.status]}
         {machine.status.toUpperCase()}
       </span>
     </div>
   );
 }
 
-function Dashboard() {
-  const [role] = useState("administrateur"); // À remplacer par contexte d'authentification réel
-
-  const [machinesData, setMachinesData] = useState([
+export default function Dashboard() {
+  const [machines, setMachines] = useState([
     {
       id: 1,
       name: "Machine A",
-      temperature: 75,
+      temperature: 70,
       vibration: 0.3,
       pressure: 1.2,
       status: "vert",
@@ -48,7 +73,7 @@ function Dashboard() {
       id: 2,
       name: "Machine B",
       temperature: 90,
-      vibration: 0.5,
+      vibration: 0.6,
       pressure: 1.5,
       status: "orange",
     },
@@ -62,9 +87,13 @@ function Dashboard() {
     },
   ]);
 
+  const [filterMachine, setFilterMachine] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+
   useEffect(() => {
+    // Mise à jour simulée des données toutes les 5 secondes
     const interval = setInterval(() => {
-      setMachinesData((prevMachines) =>
+      setMachines((prevMachines) =>
         prevMachines.map((machine) => {
           const newTemp = Math.min(
             120,
@@ -94,49 +123,73 @@ function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  // Filtrer machines selon sélection
+  const filteredMachines = machines.filter((m) => {
+    return (
+      (filterMachine === "all" || m.name === filterMachine) &&
+      (filterStatus === "all" || m.status === filterStatus)
+    );
+  });
+
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg p-6 flex flex-col">
-        <h2 className="text-2xl font-bold mb-8">PME Monitoring</h2>
-        <nav className="flex flex-col gap-4 flex-grow">
-          <Link to="/admin" className="text-blue-600 font-medium">
-            Dashboard
-          </Link>
-          <Link to="/anomalie" className="text-gray-700 hover:text-blue-600">
-            Anomalies
-          </Link>
-          <Link to="/superviseur" className="text-gray-700 hover:text-blue-600">
-            Superviseur
-          </Link>
-          <Link to="/" className="text-red-500 hover:underline mt-auto">
-            Déconnexion
-          </Link>
-        </nav>
-      </aside>
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6">
+        Tableau de bord - État des machines
+      </h1>
 
-      {/* Main content */}
-      <main className="flex-1 p-8 overflow-auto">
-        {/* Topbar */}
-        <header className="mb-8">
-          <h1 className="text-4xl font-semibold text-gray-800">
-            Tableau de bord - {role.charAt(0).toUpperCase() + role.slice(1)}
-          </h1>
-        </header>
+      {/* Filtres */}
+      <div className="flex gap-4 mb-6">
+        <select
+          className="border rounded p-2"
+          value={filterMachine}
+          onChange={(e) => setFilterMachine(e.target.value)}
+        >
+          <option value="all">Toutes les machines</option>
+          {machines.map((m) => (
+            <option key={m.id} value={m.name}>
+              {m.name}
+            </option>
+          ))}
+        </select>
 
-        {/* Contenu - liste des machines */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {machinesData.length === 0 ? (
-            <p>Chargement des données...</p>
-          ) : (
-            machinesData.map((machine) => (
-              <MachineStatusCard key={machine.id} machine={machine} />
-            ))
-          )}
-        </section>
-      </main>
+        <select
+          className="border rounded p-2"
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+        >
+          <option value="all">Toutes les criticités</option>
+          <option value="vert">Vert</option>
+          <option value="orange">Orange</option>
+          <option value="rouge">Rouge</option>
+        </select>
+      </div>
+
+      {/* Graphique température par machine */}
+      <div className="mb-10" style={{ width: "100%", height: 300 }}>
+        <ResponsiveContainer>
+          <BarChart
+            data={filteredMachines}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="temperature" fill="#3182ce" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Liste des machines */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {filteredMachines.length === 0 ? (
+          <p>Aucune machine ne correspond aux filtres sélectionnés.</p>
+        ) : (
+          filteredMachines.map((machine) => (
+            <MachineCard key={machine.id} machine={machine} />
+          ))
+        )}
+      </div>
     </div>
   );
 }
-
-export default Dashboard;

@@ -1,89 +1,172 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import AnomalyItem from "../components/AnomalyItem";
+import React, { useState } from "react";
 
-const anomaliesSimulees = [
-  {
-    id: 1,
-    machine: "Machine A",
-    type: "Température trop élevée",
-    description:
-      "La température a dépassé le seuil critique de 100°C pendant 5 minutes.",
-    recommandation:
-      "Vérifier le système de refroidissement et réduire la charge.",
-    date: "2025-06-19 14:30",
-  },
-  {
-    id: 2,
-    machine: "Machine B",
-    type: "Vibration anormale",
-    description:
-      "Les vibrations dépassent la norme, signe possible de déséquilibre mécanique.",
-    recommandation: "Inspecter les pièces mobiles et équilibrer le rotor.",
-    date: "2025-06-19 15:10",
-  },
-  {
-    id: 3,
-    machine: "Machine C",
-    type: "Pression élevée",
-    description:
-      "Pression détectée au-dessus de la limite maximale recommandée.",
-    recommandation: "Contrôler les valves et la pompe hydraulique.",
-    date: "2025-06-19 16:00",
-  },
-];
+export default function Anomalies() {
+  const [search, setSearch] = useState("");
+  const [machineFilter, setMachineFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const anomaliesParPage = 5;
 
-function AnomaliesPage() {
-  const [anomalies, setAnomalies] = useState([]);
+  const anomalies = [
+    {
+      id: 1,
+      machine: "Machine A",
+      criticite: "critique",
+      message: "Température trop élevée",
+      recommandation: "Vérifier le système de refroidissement",
+      date: "2025-06-20 09:30",
+    },
+    {
+      id: 2,
+      machine: "Machine B",
+      criticite: "moyenne",
+      message: "Vibration anormale détectée",
+      recommandation: "Inspecter les roulements",
+      date: "2025-06-20 10:00",
+    },
+    {
+      id: 3,
+      machine: "Machine C",
+      criticite: "faible",
+      message: "Pression trop basse",
+      recommandation: "Vérifier les tuyaux et vannes",
+      date: "2025-06-20 10:45",
+    },
+    {
+      id: 4,
+      machine: "Machine A",
+      criticite: "critique",
+      message: "Surchauffe moteur",
+      recommandation: "Arrêter temporairement la machine",
+      date: "2025-06-20 11:10",
+    },
+    {
+      id: 5,
+      machine: "Machine B",
+      criticite: "moyenne",
+      message: "Anomalie capteur de vibration",
+      recommandation: "Réinitialiser le capteur",
+      date: "2025-06-20 11:40",
+    },
+    {
+      id: 6,
+      machine: "Machine C",
+      criticite: "faible",
+      message: "Consommation énergétique anormale",
+      recommandation: "Surveiller dans les prochaines heures",
+      date: "2025-06-20 12:10",
+    },
+  ];
 
-  useEffect(() => {
-    setAnomalies(anomaliesSimulees);
-  }, []);
+  const filtered = anomalies.filter((a) => {
+    const matchMachine = machineFilter === "all" || a.machine === machineFilter;
+    const matchSearch =
+      a.message.toLowerCase().includes(search.toLowerCase()) ||
+      a.recommandation.toLowerCase().includes(search.toLowerCase());
+    return matchMachine && matchSearch;
+  });
+
+  const totalPages = Math.ceil(filtered.length / anomaliesParPage);
+  const anomaliesAffichees = filtered.slice(
+    (page - 1) * anomaliesParPage,
+    page * anomaliesParPage
+  );
+
+  const uniqueMachines = [...new Set(anomalies.map((a) => a.machine))];
+  const criticiteColors = {
+    critique: "bg-red-500",
+    moyenne: "bg-yellow-400",
+    faible: "bg-green-500",
+  };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg p-6 flex flex-col">
-        <h2 className="text-2xl font-bold mb-8">PME Monitoring</h2>
-        <nav className="flex flex-col gap-4 flex-grow">
-          <Link to="/dashboard" className="text-gray-700 hover:text-blue-600">
-            Dashboard
-          </Link>
-          <Link to="/anomalies" className="text-blue-600 font-medium">
-            Alertes
-          </Link>
-          <Link to="/reports" className="text-gray-700 hover:text-blue-600">
-            Rapports
-          </Link>
-          <Link to="/users" className="text-gray-700 hover:text-blue-600">
-            Gestion utilisateurs
-          </Link>
-          <Link to="/" className="text-red-500 hover:underline mt-auto">
-            Déconnexion
-          </Link>
-        </nav>
-      </aside>
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 text-red-600">
+        📋 Anomalies détectées
+      </h1>
 
-      {/* Main content */}
-      <main className="flex-1 p-8 overflow-auto">
-        <header className="mb-8">
-          <h1 className="text-4xl font-semibold text-gray-800">
-            Alertes - Anomalies détectées
-          </h1>
-        </header>
+      {/* Filtres */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <input
+          type="text"
+          placeholder="🔍 Rechercher..."
+          className="p-2 border border-gray-300 rounded w-full md:w-1/2"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1); // reset page
+          }}
+        />
+        <select
+          className="p-2 border border-gray-300 rounded w-full md:w-1/3"
+          value={machineFilter}
+          onChange={(e) => {
+            setMachineFilter(e.target.value);
+            setPage(1); // reset page
+          }}
+        >
+          <option value="all">Toutes les machines</option>
+          {uniqueMachines.map((m, i) => (
+            <option key={i} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
+      </div>
 
-        {anomalies.length === 0 ? (
-          <p>Aucune anomalie détectée.</p>
-        ) : (
-          <div className="space-y-6">
-            {anomalies.map((anomaly) => (
-              <AnomalyItem key={anomaly.id} anomaly={anomaly} />
+      {/* Tableau */}
+      <div className="overflow-x-auto bg-white rounded-lg shadow">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50 text-gray-600 text-sm uppercase text-left">
+            <tr>
+              <th className="p-3">Machine</th>
+              <th className="p-3">Message</th>
+              <th className="p-3">Recommandation</th>
+              <th className="p-3">Criticité</th>
+              <th className="p-3">Date</th>
+            </tr>
+          </thead>
+          <tbody className="text-sm divide-y divide-gray-100">
+            {anomaliesAffichees.map((a) => (
+              <tr key={a.id} className="hover:bg-gray-50 transition">
+                <td className="p-3 font-medium">{a.machine}</td>
+                <td className="p-3">{a.message}</td>
+                <td className="p-3">{a.recommandation}</td>
+                <td className="p-3">
+                  <span
+                    className={`text-white px-2 py-1 rounded-full text-xs font-semibold ${
+                      criticiteColors[a.criticite]
+                    }`}
+                  >
+                    {a.criticite}
+                  </span>
+                </td>
+                <td className="p-3 text-gray-500">{a.date}</td>
+              </tr>
             ))}
-          </div>
-        )}
-      </main>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-center items-center gap-4 mt-6">
+        <button
+          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+          disabled={page === 1}
+          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+        >
+          ◀ Précédent
+        </button>
+        <span className="font-semibold">
+          Page {page} / {totalPages}
+        </span>
+        <button
+          onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+          disabled={page === totalPages}
+          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+        >
+          Suivant ▶
+        </button>
+      </div>
     </div>
   );
 }
-
-export default AnomaliesPage;

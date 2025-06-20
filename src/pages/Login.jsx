@@ -18,7 +18,6 @@ function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Recherche utilisateur avec username, password ET rôle sélectionné
     const user = usersDB.find(
       (u) =>
         u.username === username &&
@@ -27,10 +26,7 @@ function Login() {
     );
     if (user) {
       login(user);
-      // Redirection selon rôle
-      if (user.role === "administrateur") navigate("/admin");
-      else if (user.role === "technicien") navigate("/technicien");
-      else if (user.role === "superviseur") navigate("/superviseur");
+      navigate("/dashboard"); // Redirection unique vers dashboard
     } else {
       setError("Identifiants ou rôle invalides");
     }
