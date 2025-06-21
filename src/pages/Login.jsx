@@ -25,9 +25,11 @@ function Login() {
         u.role === selectedRole
     );
     if (user) {
-      login(user);
-      navigate("/dashboard"); // Redirection unique vers dashboard
-    } else {
+  login(user);
+  if (user.role === "administrateur") navigate("/dashboard");
+  else if (user.role === "superviseur") navigate("/super-dashboard");
+  else if (user.role === "technicien") navigate("/tech-dashboard");
+}else {
       setError("Identifiants ou rôle invalides");
     }
   };
